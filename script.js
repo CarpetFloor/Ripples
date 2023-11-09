@@ -117,10 +117,8 @@ function newGroup() {
     ));
 }
 
-let frequency = 60 * (w * (0.4 / w));
-console.log(frequency);
-let maxFrame = frequency;
-let frame = maxFrame - 1;
+let frequency = Math.round(60 * 0.25);
+let frame = frequency - 1;
 
 function loop() {        
     r.clearRect(0, 0, w, h);
@@ -130,7 +128,7 @@ function loop() {
     }
 
     ++frame;
-    if(frame % maxFrame == 0) {
+    if(frame % frequency == 0) {
         frame = 0;
 
         newGroup();
