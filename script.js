@@ -32,6 +32,11 @@ class RippleGroup {
          * maxFrame
          */
         this.frame = this.maxFrame - 1;
+        this.color = "#" + 
+        (
+            parseInt("B39DDB", 16) 
+            + Math.floor(random(-20, 35))
+        ).toString(16);
     }
     update() {
         // add new ripple
@@ -45,7 +50,8 @@ class RippleGroup {
                 this.ripples.push(new Ripple(
                     this.x, this.y, 
                     this.size, this.rate, 
-                    this.strength, this.strengthRateInfluence)
+                    this.strength, this.strengthRateInfluence, 
+                    this.color)
                 );
             }
         }
@@ -69,13 +75,14 @@ class RippleGroup {
 }
 
 class Ripple {
-    constructor(x, y, size, rate, strength, strengthRateInfluence) {
+    constructor(x, y, size, rate, strength, strengthRateInfluence, color) {
         this.x = x;
         this.y = y;
         this.size = size;
         this.rate = rate;
         this.strength = strength;
         this.strengthRateInfluence = strengthRateInfluence;
+        this.color = color;
     }
     draw() {
         r.beginPath();
@@ -84,6 +91,7 @@ class Ripple {
         r.arc(this.x, this.y, this.size, 0, 2 * Math.PI);
 
         r.lineWidth = this.strength;
+        r.strokeStyle = this.color;
         r.stroke();
         
         r.closePath();
@@ -109,9 +117,9 @@ function newGroup() {
     ));
 }
 
-
-r.strokeStyle = "#B39DDB";
-let maxFrame = 5;
+let frequency = 60 * (w * (0.4 / w));
+console.log(frequency);
+let maxFrame = frequency;
 let frame = maxFrame - 1;
 
 function loop() {        
@@ -124,7 +132,6 @@ function loop() {
     ++frame;
     if(frame % maxFrame == 0) {
         frame = 0;
-        maxFrame = Math.floor(random(60 * 0.1, 60 * 0.7));
 
         newGroup();
     }
