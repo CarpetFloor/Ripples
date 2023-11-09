@@ -5,45 +5,129 @@ c.height = window.innerHeight - 20;
 const w = c.width;
 const h = c.height;
 
-class Ripple {
-    constructor(x, y, size, density) {
+function random(min, max) {
+    return Math.random() * (max - min) + min;
+}
+
+class RippleGroup {
+    constructor(x, y, size, strength, maxCount) {
         this.x = x;
         this.y = y;
         this.size = size;
-        this.startSize = size;
-        this.sizeIncrease = 1.02;
-        this.density = density;
+        // rate at which size increases and strength decreases
+        // lower is slower
+        this.rate = 1.02;
+        // how different the change in strength is from the change in size
+        // lower is slower
+        this.strengthRateInfluence = random(0.04, 0.1);
+        this.strength = strength;
+        this.ripples = [];
+        this.count = 0;
+        this.maxCount = maxCount;
+        this.maxFrame = Math.floor(random(15, 35));
+        /**
+         * start at maxFrame - 1 so that on very first frame 
+         * ripple will be created (-1 because frame is incremented 
+         * right away), rather than having to wait until frame = 
+         * maxFrame
+         */
+        this.frame = this.maxFrame - 1;
+    }
+    update() {
+        // add new ripple
+        if(this.count < this.maxCount) {
+            ++this.frame;
+
+            if(this.frame % this.maxFrame == 0) {
+                ++this.count;
+                this.frame = 0;
+
+                this.ripples.push(new Ripple(
+                    this.x, this.y, 
+                    this.size, this.rate, 
+                    this.strength, this.strengthRateInfluence)
+                );
+            }
+        }
+
+        // update existing ripples
+        for(let ripple of this.ripples) {
+            ripple.draw();
+            ripple.update();
+
+            // delete ripple when strength is small enough
+            if(ripple.strength < 0.05) {
+                this.ripples.splice(this.ripples.indexOf(ripple), 1);
+            }
+        }
+
+        // delete group if all ripples are gone
+        if((this.count == this.maxCount) && (this.ripples.length == 0)) {
+            ripples.splice(ripples.indexOf(this), 1);
+        }
     }
 }
+
+class Ripple {
+    constructor(x, y, size, rate, strength, strengthRateInfluence) {
+        this.x = x;
+        this.y = y;
+        this.size = size;
+        this.rate = rate;
+        this.strength = strength;
+        this.strengthRateInfluence = strengthRateInfluence;
+    }
+    draw() {
+        r.beginPath();
+
+        // draw ripple
+        r.arc(this.x, this.y, this.size, 0, 2 * Math.PI);
+
+        r.lineWidth = this.strength;
+        r.stroke();
+        
+        r.closePath();
+    }
+    update() {
+        // update properties, and make ripple "move"
+        this.size *= this.rate;
+        this.strength -= this.rate * this.strengthRateInfluence;
+
+        this.rate -= 0.000102;
+    }
+}
+
 let ripples = [];
-ripples.push(new Ripple(w / 2, h / 2, 10, 5));
+
+function newGroup() {
+    ripples.push(new RippleGroup(
+        random(0, w), // x pos
+        random(0, h), // y pos
+        random(15, 50), // size
+        random(4, 8), // strength
+        random(5, 10) // ripples count
+    ));
+}
+
 
 r.strokeStyle = "#B39DDB";
+let maxFrame = 5;
+let frame = maxFrame - 1;
 
 function loop() {        
     r.clearRect(0, 0, w, h);
 
     for(let ripple of ripples) {
-        r.beginPath();
+        ripple.update();
+    }
 
-        // draw ripple
-        r.arc(ripple.x, ripple.y, ripple.size, 0, 2 * Math.PI);
+    ++frame;
+    if(frame % maxFrame == 0) {
+        frame = 0;
+        maxFrame = Math.floor(random(60 * 0.1, 60 * 0.7));
 
-        // update properties, and make ripple "move"
-        ripple.size *= ripple.sizeIncrease;
-        ripple.sizeIncrease -= 0.0001;
-        r.lineWidth = ripple.density;
-
-        // delete ripple when density is small enough
-        if(ripple.density > 0.025) {
-            ripple.density -= 0.025;
-        }
-        else {
-            ripples.splice(ripples.indexOf(ripple), 1);
-        }
-        r.stroke();
-
-        r.closePath();
+        newGroup();
     }
 }
+
 window.setInterval(loop, Math.round(1000 / 60));
